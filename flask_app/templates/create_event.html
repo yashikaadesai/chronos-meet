@@ -1,0 +1,123 @@
+{% extends 'shared/layout.html' %}
+{% block title %}Create Event - When2Meet{% endblock %}
+{% block extracss %}
+<link rel="stylesheet" href="{{ url_for('static', filename='main/css/create_event.css') }}">
+{% endblock %}
+
+{% block maincontent %}
+<div class="create-event-container">
+    <h1 class="page-title">Create a New Event</h1>
+    {% if error %}
+    <div class="message message--error" style="display: block;">
+        {{ error }}
+    </div>
+    {% endif %}
+    
+    <form action="/create-event" method="POST" class="event-form">
+        <div class="form-group">
+            <label for="event_name" class="form-label">Event Name</label>
+            <input 
+                type="text" 
+                id="event_name" 
+                name="event_name" 
+                class="form-input"
+                title="Enter a descriptive name for your event"
+                placeholder="e.g., Team Meeting Scheduler"
+                required
+            >
+            <span class="form-hint">A short descriptive title for the event</span>
+        </div>
+>
+        <div class="form-row">
+            <div class="form-group form-group--half">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input 
+                    type="date" 
+                    id="start_date" 
+                    name="start_date" 
+                    class="form-input"
+                    title="Select the first date of the availability range"
+                    required
+                >
+            </div>
+            
+            <div class="form-group form-group--half">
+                <label for="end_date" class="form-label">End Date</label>
+                <input 
+                    type="date" 
+                    id="end_date" 
+                    name="end_date" 
+                    class="form-input"
+                    title="Select the last date of the availability range"
+                    required
+                >
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group form-group--half">
+                <label for="start_time" class="form-label">Daily Start Time</label>
+                <input 
+                    type="time" 
+                    id="start_time" 
+                    name="start_time" 
+                    class="form-input"
+                    title="Select the earliest time for availability slots"
+                    value="08:00"
+                    required
+                >
+            </div>
+            
+            <div class="form-group form-group--half">
+                <label for="end_time" class="form-label">Daily End Time</label>
+                <input 
+                    type="time" 
+                    id="end_time" 
+                    name="end_time" 
+                    class="form-input"
+                    title="Select the latest time for availability slots"
+                    value="20:00"
+                    required
+                >
+            </div>
+        </div>
+        >
+        <div class="form-group">
+            <label for="invitees" class="form-label">Invitee Emails</label>
+            <textarea 
+                id="invitees" 
+                name="invitees" 
+                class="form-textarea"
+                title="Enter email addresses of people to invite"
+                placeholder="user1@email.com, user2@email.com, user3@email.com"
+                rows="3"
+            ></textarea>
+            <span class="form-hint">Enter comma-separated email addresses of registered users to invite</span>
+        </div>
+        
+        <div class="form-actions">
+            <a href="/dashboard" class="btn btn--secondary">Cancel</a>
+            <button type="submit" class="btn btn--primary">Create Event</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('start_date').setAttribute('min', today);
+    document.getElementById('end_date').setAttribute('min', today);
+
+    document.getElementById('start_date').addEventListener('change', function() {
+        document.getElementById('end_date').setAttribute('min', this.value);
+        const endDate = document.getElementById('end_date');
+        if (endDate.value && endDate.value < this.value) {
+            endDate.value = this.value;
+        }
+    });
+});
+</script>
+{% endblock %}

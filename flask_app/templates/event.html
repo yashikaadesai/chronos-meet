@@ -1,0 +1,146 @@
+{% extends 'shared/layout.html' %}
+{% block title %}{{ event.event_name }} - When2Meet{% endblock %}
+
+{% block extracss %}
+<link rel="stylesheet" href="{{ url_for('static', filename='main/css/event.css') }}">
+{% endblock %}
+
+{% block maincontent %}
+<div class="event-container">
+    <div class="event-header">
+        <h1 class="event-title">{{ event.event_name }}</h1>
+        <p class="event-dates">
+            {{ event.start_date.strftime('%B %d, %Y') if event.start_date.strftime else event.start_date }}
+            – 
+            {{ event.end_date.strftime('%B %d, %Y') if event.end_date.strftime else event.end_date }}
+        </p>
+        <p class="event-creator">Created by: {{ event.creator_email }}</p>
+    </div>
+    
+    <div class="best-time-section" id="best-time-section">
+        <h2 class="best-time-title">Best Time to Meet</h2>
+        <div class="best-time-content" id="best-time-content">
+            {% if best_slot and best_slot.available_count > 0 %}
+                {% set slot_date = best_slot.slot_date %}
+                {% set slot_time = best_slot.slot_time %}
+                
+                {% if slot_date.strftime is defined %}
+                    {% set formatted_date = slot_date.strftime('%A, %B %d') %}
+                {% else %}
+                    {% set formatted_date = slot_date %}
+                {% endif %}
+                
+                {% if slot_time.total_seconds is defined %}
+                    {% set total_secs = slot_time.total_seconds()|int %}
+                    {% set hours = (total_secs // 3600)|int %}
+                    {% set minutes = ((total_secs % 3600) // 60)|int %}
+                    {% set start_hour = hours %}
+                    {% set start_min = minutes %}
+                {% else %}
+                    {% set start_hour = slot_time.hour %}
+                    {% set start_min = slot_time.minute %}
+                {% endif %}
+                
+                {% set end_min = start_min + 30 %}
+                {% set end_hour = start_hour %}
+                {% if end_min >= 60 %}
+                    {% set end_min = end_min - 60 %}
+                    {% set end_hour = end_hour + 1 %}
+                {% endif %}
+                
+                <p class="best-time-date">{{ formatted_date }}</p>
+                <p class="best-time-slot">
+                    {{ '%02d:%02d'|format(start_hour, start_min) }} – {{ '%02d:%02d'|format(end_hour, end_min) }}
+                </p>
+                <p class="best-time-count">{{ best_slot.available_count }} participant(s) available</p>
+            {% else %}
+                <p class="best-time-empty">No availability submitted yet</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mode-selector">
+        <label for="availability-mode" class="mode-label">Select Availability Mode:</label>
+        <select id="availability-mode" class="mode-dropdown">
+            <option value="available">Available</option>
+            <option value="maybe">Maybe</option>
+            <option value="unavailable">Unavailable</option>
+        </select>
+        
+        <div class="mode-indicator">
+            <span class="mode-indicator__label">Current Mode:</span>
+            <span class="mode-indicator__value" id="current-mode-display">Available</span>
+        </div>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item">
+            <span class="legend-color legend-color--available"></span>
+            <span class="legend-text">Available</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color legend-color--maybe"></span>
+            <span class="legend-text">Maybe</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color legend-color--unavailable"></span>
+            <span class="legend-text">Unavailable</span>
+        </div>
+    </div>
+    
+    <div class="grid-container">
+        <div class="grid-wrapper">
+            <table class="availability-grid" id="availability-grid">
+                <thead>
+                    <tr>
+                        <th class="grid-header grid-header--time">Time</th>
+                        {% for date in dates %}
+                            <th class="grid-header grid-header--date">
+                                {{ date }}
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for time_slot in time_slots %}
+                        <tr class="grid-row">
+                            <td class="grid-cell grid-cell--time">
+                                {% set hour = time_slot.split(':')[0]|int %}
+                                {% set minute = time_slot.split(':')[1] %}
+                                {{ '%02d:%s'|format(hour, minute) }}
+                            </td>
+                            {% for date in dates %}
+                                {% set cell_key = date ~ '_' ~ time_slot %}
+                                {% set user_status = user_availability.get(cell_key, 'none') %}
+                                {% set counts = slot_counts.get(cell_key, {'available': 0, 'maybe': 0, 'unavailable': 0}) %}
+                                
+                                <td class="grid-cell grid-cell--slot" 
+                                    data-date="{{ date }}"
+                                    data-time="{{ time_slot }}"
+                                    data-status="{{ user_status }}"
+                                    data-available="{{ counts.available }}"
+                                    data-maybe="{{ counts.maybe }}"
+                                    data-unavailable="{{ counts.unavailable }}">
+                                    <div class="cell-content">
+                                        <div class="cell-heatmap"></div>
+                                        <div class="cell-indicator"></div>
+                                    </div>
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <a href="/dashboard" class="btn btn--secondary back-btn">Back to Dashboard</a>
+</div>
+
+<input type="hidden" id="event-id" value="{{ event.event_id }}">
+<input type="hidden" id="participant-count" value="{{ participant_count }}">
+{% endblock %}
+
+{% block extrajs %}
+<script src="{{ url_for('static', filename='main/js/event.js') }}"></script>
+{% endblock %}

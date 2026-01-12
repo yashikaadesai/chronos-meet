@@ -1,0 +1,105 @@
+{% extends 'shared/layout.html' %}
+{% block title %}Sign Up - When2Meet{% endblock %}
+
+{% block extracss %}
+<link rel="stylesheet" href="{{ url_for('static', filename='main/css/auth.css') }}">
+{% endblock %}
+
+{% block maincontent %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1 class="auth-title">Create Account</h1>
+        <div id="success-message" class="message message--success">
+            Account created! Redirecting...
+        </div>
+        <div id="error-message" class="message message--error">
+            <span id="error-text">Registration failed</span>
+        </div>
+        <form id="signup-form" class="auth-form">
+            <div class="form-group">
+                <label for="email" class="form-label">Email</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    class="form-input"
+                    title="Enter a valid email address"
+                    placeholder="you@example.com"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-input"
+                    title="Choose a secure password"
+                    placeholder="Choose a password"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <label for="confirm_password" class="form-label">Confirm Password</label>
+                <input 
+                    type="password" 
+                    id="confirm_password" 
+                    name="confirm_password" 
+                    class="form-input"
+                    title="Re-enter your password"
+                    placeholder="Confirm your password"
+                    required
+                >
+            </div>
+            <button type="submit" class="btn btn--primary btn--full">Sign Up</button>
+        </form>
+        <p class="auth-footer">
+            Already have an account? <a href="/login" class="auth-link">Login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+
+document.getElementById('signup-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+
+    if (password !== confirmPassword) {
+        document.getElementById('error-text').textContent = 'Passwords do not match';
+        document.getElementById('error-message').style.display = 'block';
+        return;
+    }
+ 
+    jQuery.ajax({
+        url: '/processsignup',
+        method: 'POST',
+        data: { email: email, password: password,confirm_password: confirmPassword},
+        success: function(response) {
+            const data = JSON.parse(response);
+            
+            if (data.success === 1) {
+                document.getElementById('success-message').style.display = 'block';
+                document.getElementById('error-message').style.display = 'none';
+                setTimeout(function() {
+                    window.location.href = '/dashboard';}, 500);
+            } else {
+                document.getElementById('error-text').textContent = data.message || 'Registration failed';
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('success-message').style.display = 'none';
+            }
+        },
+        error: function() {
+            document.getElementById('error-text').textContent = 'Server error. Please try again.';
+            document.getElementById('error-message').style.display = 'block';
+        }
+    });
+});
+</script>
+{% endblock %}
